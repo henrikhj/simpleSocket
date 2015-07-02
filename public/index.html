@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html ng-app="app">
+
+    <head>
+
+        <base href="/">
+
+        <meta charset="utf-8" />
+        <title>TV 2 / FAN</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+
+        <style type="text/css">
+            body {
+
+                width:100%;
+                height:100%;
+            }
+
+            .bg{
+                height: 80px;
+
+            }
+
+
+            .green{
+                background-color: lawngreen;
+            }
+
+            .btn{
+
+                margin-top: 12px;
+            }
+
+        </style>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui">
+        <meta name="apple-mobile-web-app-status-bar-style" content="yes" />
+
+        <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">-->
+        <link rel="stylesheet" href="./bootstrap.min.css">
+        </head>
+
+    <body class="container-fluid" ng-controller="MainController as mainCtrl">
+
+
+    <div class="bg row" ng-class="{green: mainCtrl.isConnected == true}">
+
+        <div class="col-xs-12">
+            <!--<button class="btn btn-default btn-lg">USER IS CONNECTED</button>-->
+            <div class="text-center " >
+
+                <h2>User Is connected: {{mainCtrl.isConnected }} </h2>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bg row">
+
+        <div class="col-xs-12 text-center">
+            <button ng-click="mainCtrl.click()" class="btn btn-default btn-lg btn-primary">Send ping</button>
+
+        </div>
+
+    </div>
+
+    <div class="bg row">
+
+        <div class="col-xs-12 text-center">
+            {{mainCtrl.serverMsg}}
+
+        </div>
+
+    </div>
+
+
+    <script type="text/javascript" src="myPrimus.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.1/angular.min.js
+"></script>
+
+    <script type="text/javascript">
+
+
+        var app = angular.module('app', []);
+
+        app.controller('MainController', ['PrimusFactory','$rootScope','$timeout', '$scope', function(PrimusFactory, $rootScope, $timeout, $scope) {
+
+            var vm = this;
+            vm.isConnected = false;
+            vm.serverMsg = "-";
+            vm.msgtimer = null
+
+            $rootScope.userConnected = function (bool) {
+                console.log (" index.html > TRUE = " );
+
+                $scope.$apply(function () {
+                    vm.isConnected = true;
+                });
+            };
+
+            $rootScope.fromServer = function (data) {
+                $scope.$apply(function () {
+                    vm.serverMsg = data;
+                });
+
+                $timeout.cancel( vm.msgtimer );
+
+               vm.msgtimer = $timeout(function (argument) {
+                    $rootScope.fromServer("")
+
+                },1000);
+            };
+
+
+            vm.click = function () {
+                PrimusFactory.emit('custom-event', {"ok":true})
+            };
+            
+
+            var timer = $timeout(function (argument) {
+                PrimusFactory.connect()
+
+            },2000);
+
+
+        }]);
+
+        app.factory('PrimusFactory', ['$rootScope', function($rootScope) {
+            var primus;
+
+            return {
+                connect:connect,
+                emit:emit
+            }
+
+// SOCKET IO CONNECT
+//---------------------------------------------------------------------------------------
+
+            function connect () {
+
+                if (primus) primus.end();
+
+                var options = {};
+                var url = "";
+
+                primus = new Primus( );
+
+                primus.on('open', function open() {
+                    console.log (" PrimusFactory.js > OPEN = " );
+                    $rootScope.userConnected(true)
+
+                });
+
+
+                primus.on('ping', function (data) {
+                    console.log (" PrimusFactory.js > ping = " , data);
+                    $rootScope.fromServer(data.ping)
+                });
+
+            };// close connect
+
+
+
+
+            function emit(eventName, data) {
+                primus.emit(eventName, data );
+            };
+
+
+
+        }]);
+
+    </script>
+
+
+
+
+
+    </body>
+</html>
