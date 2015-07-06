@@ -7,6 +7,7 @@ var primusEmitPlugin = require('primus-emit');
 var path = require('path');
 
 var primus = null;
+var connetedClients = 0;
 
 exports.init = function (server) {
 
@@ -26,7 +27,8 @@ exports.init = function (server) {
     primus.on('connection', function (sp) {
         var spark = sp;
 
-        console.log (" primusController.js > USER CONNECTED = ");
+        connetedClients++
+        console.log (" primusController.js > USER CONNECTED = ", connetedClients);
 
         spark.on('custom-event', function custom(data) {
             var d = Date.now()
@@ -35,5 +37,17 @@ exports.init = function (server) {
         });
 
     });// close connection
+
+
+    //disconnection
+
+
+    primus.on('disconnection', function (sp) {
+
+        connetedClients--;
+        console.log (" primusController.js >  = USER CONNECTED  " , connetedClients);
+    });// close connection
+
+
 
 };
