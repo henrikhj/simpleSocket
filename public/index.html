@@ -65,12 +65,15 @@
     </div>
 
     <div class="bg row">
+        <div class="col-xs-12 text-center">
+            Username:<h2>{{mainCtrl.userName}}</h2>
+        </div>
+    </div>
 
+    <div class="bg row">
         <div class="col-xs-12 text-center">
             {{mainCtrl.serverMsg}}
-
         </div>
-
     </div>
 
 
@@ -81,18 +84,41 @@
     <script type="text/javascript">
 
 
-        var app = angular.module('app', []);
+        var app = angular.module('app', [],
+            function config($httpProvider) {
+               // $httpProvider.interceptors.push('AuthInterceptor');
+            }
+        );
 
-        app.controller('MainController', ['PrimusFactory','$rootScope','$timeout', '$scope', function(PrimusFactory, $rootScope, $timeout, $scope) {
+       /* app.factory('AuthInterceptor', ['$window', function ($window) {
+                return {
+                    request: addToken
+                };
+
+                function addToken(config) {
+                    var token = $window.myToken; //AuthTokenFactory.getToken();
+
+                    if (token) {
+                        config.headers = config.headers || {};
+                        config.headers.Authorization = 'Bearer ' + token;
+                    }
+                    return config;
+                }
+                 }
+
+
+        ]);*/
+
+        app.controller('MainController', ['PrimusFactory','$rootScope','$timeout', '$scope', '$http','$window', function(PrimusFactory, $rootScope, $timeout, $scope, $http,$window) {
 
             var vm = this;
             vm.isConnected = false;
             vm.serverMsg = "-";
-            vm.msgtimer = null
+            vm.msgtimer = null;
+            vm.token = "";
+            vm.userName = "";
 
             $rootScope.userConnected = function (bool) {
-                console.log (" index.html > TRUE = " );
-
                 $scope.$apply(function () {
                     vm.isConnected = true;
                 });
@@ -105,9 +131,9 @@
 
                 $timeout.cancel( vm.msgtimer );
 
+               //clears the message
                vm.msgtimer = $timeout(function (argument) {
                     $rootScope.fromServer("")
-
                 },1000);
             };
 
@@ -115,15 +141,36 @@
             vm.click = function () {
                 PrimusFactory.emit('custom-event', {"ok":true})
             };
-            
+
 
             var timer = $timeout(function (argument) {
-                PrimusFactory.connect()
+                vm.login()
+             },1000);
 
-            },2000);
 
+            vm.login = function () {
+                var postUrl = "./auth";
+                $http.get(postUrl).then(
+                        function succes(res) {
+                            vm.token = res.data.token;
+                            console.log (" index.html > vm.token  = " , vm.token );
+                            console.log (" index.html > User  = " , res.data.user );
+                            $window.myToken = vm.token;
+                            vm.userName = res.data.user.userName;
+                            vm.connectToSocket()
+                        },
+                        function error(res) {
+                            console.log (" index.html > error res = " , res);
+                        }
+                )
+            };
+
+            vm.connectToSocket = function () {
+                PrimusFactory.connect(vm.token)
+            };
 
         }]);
+
 
         app.factory('PrimusFactory', ['$rootScope', function($rootScope) {
             var primus;
@@ -131,26 +178,42 @@
             return {
                 connect:connect,
                 emit:emit
-            }
+            };
 
 // SOCKET IO CONNECT
 //---------------------------------------------------------------------------------------
 
-            function connect () {
+            function connect (token) {
+                var myToken = token;
 
                 if (primus) primus.end();
 
                 var options = {};
-                var url = "";
+                primus = new Primus();
+                primus.on('outgoing::url', function connectionURL(url) {
+                   // console.log (" index.html > myToken = " , myToken);
 
-                primus = new Primus( );
+                    // Connect with token
+                    url.query = 'token=' + (myToken || '');
+
+                   /* primus.socket.on('unexpected-response', function (req, res) {
+                        console.error(res.statusCode);
+                        console.error(res.headers['www-authenticate']);
+
+                        // It's up to us to close the request (although it will time out).
+                        req.abort();
+
+                        // It's also up to us to emit an error so primus can clean up.
+                        primus.socket.emit('error', 'authorization failed: ' + res.statusCode);
+                    });*/
+
+
+                });
 
                 primus.on('open', function open() {
                     console.log (" PrimusFactory.js > OPEN = " );
                     $rootScope.userConnected(true)
-
                 });
-
 
                 primus.on('ping', function (data) {
                     console.log (" PrimusFactory.js > ping = " , data);
@@ -163,7 +226,10 @@
 
 
             function emit(eventName, data) {
-                primus.emit(eventName, data );
+                //if(primus ){
+                    primus.emit(eventName, data );
+                //}
+
             };
 
 

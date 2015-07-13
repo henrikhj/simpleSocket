@@ -5,9 +5,12 @@
 var Primus = require('primus');
 var primusEmitPlugin = require('primus-emit');
 var path = require('path');
-
 var primus = null;
 var connetedClients = 0;
+
+var jwt = require('jsonwebtoken');
+var jwtSecret = require ('../config').jwtSecret;
+
 
 exports.init = function (server) {
 
@@ -19,10 +22,27 @@ exports.init = function (server) {
 
     primus.use('emit', primusEmitPlugin);
 
-    var p = path.join(__dirname, '../../public/myPrimus.js')
+    var p = path.join(__dirname, '../../public/myPrimus.js');
     primus.save(p , function save(err) {
 
     });
+
+
+   primus.authorize(function (req, done) {
+
+        var token = req.query.token;
+        jwt.verify(token, jwtSecret, function(err, decoded) {
+            if(err ){
+                console.log (" authorize.js > err " , err)
+                done(err);
+            }else{
+                req.decoded_token = decoded;
+                done();
+            }
+        })
+    });
+
+
 
     primus.on('connection', function (sp) {
         var spark = sp;
@@ -40,10 +60,7 @@ exports.init = function (server) {
 
 
     //disconnection
-
-
     primus.on('disconnection', function (sp) {
-
         connetedClients--;
         console.log (" primusController.js >  = USER CONNECTED  " , connetedClients);
     });// close connection
@@ -51,3 +68,4 @@ exports.init = function (server) {
 
 
 };
+

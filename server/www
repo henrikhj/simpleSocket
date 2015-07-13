@@ -11,8 +11,8 @@ var mongoose = require('mongoose');
 var primusController= require('./controller/primusController');
 
 
-/*
-var mongo_uri = ''
+
+var mongo_uri = process.env.MONGO_URI;
 var dbConnection = mongoose.connect(mongo_uri , {}, function(err) {
   if (err) {
     console.log (" www > mongo connection err = " , err);
@@ -23,10 +23,6 @@ var dbConnection = mongoose.connect(mongo_uri , {}, function(err) {
 
 var dbConnection = mongoose.connection;
 dbConnection.on('error', console.error.bind(console, 'MongoDB connection error:'));
-*/
-
-
-
 
 /**
  * Get port from environment and store in Express.
