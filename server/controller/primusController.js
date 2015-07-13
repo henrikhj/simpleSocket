@@ -51,9 +51,14 @@ exports.init = function (server) {
         console.log (" primusController.js > USER CONNECTED = ", connetedClients);
 
         spark.on('custom-event', function custom(data) {
-            var d = Date.now()
+            var d = Date.now();
             var obj = {"ping": "pong " + d};
-            this.emit('ping', obj);
+            //this.emit('ping', obj);
+
+            primus.forEach(function (spark) {
+                spark.emit('ping', obj);
+            });
+
         });
 
     });// close connection

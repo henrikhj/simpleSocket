@@ -55,7 +55,7 @@ function sendToken (err, result, res ) {
     };
 
     var token = jwt.sign( userObj , jwtSecret, { expiresInMinutes: 60*5 });
-    res.send ({"token": token, "user": userObj })
+    res.json ({"token": token, "user": userObj })
 
 };
 

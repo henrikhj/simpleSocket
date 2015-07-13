@@ -216,8 +216,11 @@
                 });
 
                 primus.on('ping', function (data) {
+
                     console.log (" PrimusFactory.js > ping = " , data);
                     $rootScope.fromServer(data.ping)
+
+
                 });
 
             };// close connect
