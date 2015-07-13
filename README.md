@@ -13,3 +13,6 @@ Du kan også forbinde direkte til en websocket forbindelse:
 
     ws://localhost:3000/primus
 
+En test klient som kalder server og får token tilbage kan køres fra
+    node server/testClient.js
+
