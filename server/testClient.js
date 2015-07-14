@@ -1,28 +1,36 @@
-// npm install
+
 var WebSocket = require('ws');
-//var log = require('npmlog');
 var async = require('async');
 var Primus = require('Primus');
-var sockets = [];
 var  request = require('request');
+
+
+// USAGES:
+/****************************************************************************************
+ * node server/testClient.js  ”domaine” ”amount of users”
+ * @example node server/testClient.js  https://next-fan.com 200 *
+ */
+// COMMAND LINE PARAMETERS
 //---------------------------------------------------------------------------------------
-
-
-var p = process.argv[2] || "http://next-fan.com";
-var basePath = p;
-
+var basePath  = process.argv[2] || "http://next-fan.com";
 var clientAmounts = process.argv[3] || 10;
 
-process.argv.forEach(function (val, index, array) {
-    console.log(index + ': ' + val);
-});
-
-console.log (" testClient.js > p = " , p, clientAmounts );
 
 
+// VARS
+//---------------------------------------------------------------------------------------
+var sockets = [];
+
+
+
+// NEW TEST CLIENT
+//---------------------------------------------------------------------------------------
 function TestClient () {
 };
 
+
+// START
+//---------------------------------------------------------------------------------------
 TestClient.prototype.start = function(){
     var self = this;
     request(basePath + '/auth', function (error, response, body) {
@@ -33,6 +41,9 @@ TestClient.prototype.start = function(){
     });
 };
 
+
+// CONNECT TO SOCKET
+//---------------------------------------------------------------------------------------
 TestClient.prototype.connectWs = function(t){
     var token = t;
     var Socket = Primus.createSocket({
@@ -60,15 +71,11 @@ TestClient.prototype.connectWs = function(t){
         this.emit("pong", d );
 
     });
-
-
-
 };
 
 
-/****************************************************************
- * START THE TEST
- */
+//START THE TEST
+//---------------------------------------------------------------------------------------
 function startTest() {
     var amount = [];
     amount.length = clientAmounts;
@@ -87,10 +94,11 @@ function startTest() {
         console.log('TRYING TO CONNECT... \n');
 
     });
-
 };
 
 
+// KICK OFF
+//---------------------------------------------------------------------------------------
 startTest();
 
 
