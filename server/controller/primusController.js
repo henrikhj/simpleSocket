@@ -47,7 +47,7 @@ exports.init = function (server) {
     primus.on('connection', function (sp) {
         var spark = sp;
 
-        connetedClients++
+        connetedClients++;
         console.log (" primusController.js > USER CONNECTED = ", connetedClients);
 
         spark.on('custom-event', function custom(data) {
@@ -58,8 +58,13 @@ exports.init = function (server) {
             primus.forEach(function (spark) {
                 spark.emit('ping', obj);
             });
+        });
+
+        spark.on('pong', function custom(data) {
+            console.log (" pong recieved: " , data);
 
         });
+
 
     });// close connection
 

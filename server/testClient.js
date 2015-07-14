@@ -54,8 +54,14 @@ TestClient.prototype.connectWs = function(t){
     });
 
     client.on('ping', function (data) {
+
         console.log (" testClient.js > ping = " , data);
+        var d = Date.now()
+        this.emit("pong", d );
+
     });
+
+
 
 };
 
