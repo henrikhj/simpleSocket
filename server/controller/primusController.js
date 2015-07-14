@@ -7,9 +7,9 @@ var primusEmitPlugin = require('primus-emit');
 var path = require('path');
 var primus = null;
 var connetedClients = 0;
-
 var jwt = require('jsonwebtoken');
 var jwtSecret = require ('../config').jwtSecret;
+var QuizAnswer = require('../models/QuizAnswer');
 
 
 exports.init = function (server) {
@@ -33,7 +33,7 @@ exports.init = function (server) {
         var token = req.query.token;
         jwt.verify(token, jwtSecret, function(err, decoded) {
             if(err ){
-                console.log (" authorize.js > err " , err)
+                console.log (" authorize.js > err " , err);
                 done(err);
             }else{
                 req.decoded_token = decoded;
@@ -51,18 +51,25 @@ exports.init = function (server) {
         console.log (" primusController.js > USER CONNECTED = ", connetedClients);
 
         spark.on('custom-event', function custom(data) {
+
             var d = Date.now();
             var obj = {"ping": "pong " + d};
-            //this.emit('ping', obj);
 
+
+            console.log (" SEND PING TO ALL = ") ;
             primus.forEach(function (spark) {
                 spark.emit('ping', obj);
             });
         });
 
-        spark.on('pong', function custom(data) {
-            console.log (" pong recieved: " , data);
 
+        spark.on('pong', function custom(data) {
+
+            console.log (" pong recieved: " , data);
+            var decodedToken = spark.request.decoded_token;
+            var userId = decodedToken.userId;
+            //console.log (" primusController.js > userId  = " , userId );
+            saveToDatabase (userId, data )
         });
 
 
@@ -79,3 +86,18 @@ exports.init = function (server) {
 
 };
 
+
+function saveToDatabase (userId, time) {
+    var entry = new QuizAnswer({
+        userId:	userId,
+        time:time
+    });
+
+    entry.save(function (err, result) {
+        if(err ){
+            console.log (" primusController.js > ERROR = " , err );
+        }else{
+            console.log (" primusController.js > ENTRY SAVED  ");
+        }
+    });
+};
