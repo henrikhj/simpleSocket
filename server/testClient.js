@@ -8,7 +8,17 @@ var  request = require('request');
 //---------------------------------------------------------------------------------------
 
 
-var basePath = "http://localhost:3000";
+var p = process.argv[2] || "http://next-fan.com";
+var basePath = p;
+
+var clientAmounts = process.argv[3] || 10;
+
+process.argv.forEach(function (val, index, array) {
+    console.log(index + ': ' + val);
+});
+
+console.log (" testClient.js > p = " , p, clientAmounts );
+
 
 function TestClient () {
 };
@@ -18,6 +28,7 @@ TestClient.prototype.start = function(){
     request(basePath + '/auth', function (error, response, body) {
         var json = JSON.parse(body)
         var token = json.token;
+        console.log (" testClient.js > token  = " , token );
         self.connectWs(token)
     });
 };
@@ -32,7 +43,7 @@ TestClient.prototype.connectWs = function(t){
             }
         });
 
-    var client = new Socket('http://localhost:3000/primus');
+    var client = new Socket(basePath);
 
     client.on('outgoing::url', function connectionURL(url) {
         url.query = 'token=' + (token || '');
@@ -54,9 +65,12 @@ TestClient.prototype.connectWs = function(t){
  */
 function startTest() {
     var amount = [];
-    amount.length = 500;
-
-    console.log ("::: STARTING CLIENT WITH "+amount.length  + " CONNECTIONS" );
+    amount.length = clientAmounts;
+    
+    console.log ("");
+    console.log ("");
+    console.log ("::: STARTING CLIENT AT: " + basePath + " WITH "+ amount.length  + " CONNECTIONS" );
+    console.log ("-----------------------------------------------------------------------------");
 
     async.each(amount, function(file, callback) {
         var t = new TestClient()
@@ -64,7 +78,8 @@ function startTest() {
         t.start();
         callback();
     }, function(err){
-        console.log('TRYING TO CONNECT...');
+        console.log('TRYING TO CONNECT... \n');
+
     });
 
 };
@@ -73,46 +88,3 @@ function startTest() {
 startTest();
 
 
-
-
-//log.level = 'verbose';
-/*
-var sockets = [];
-var maxSockets = 415; // max 400
-var connectionAttempts = 0;
-
-function connectToWebSocket() {
-    connectionAttempts++;
-
-    var socket = {};
-
-    var ws;
-
-    (function() {
-        ws = new WebSocket('http://localhost:3000/primus');
-    })();
-
-    ws.on('open', function() {
-        //log.info('Connected');
-        console.log (" testClient.js > Connected = " );
-    });
-
-    ws.on('error', function() {
-        //log.error('Error');
-        console.log (" testClient.js > Error = " );
-    });
-
-    ws.on('close', function() {
-
-        console.log (" testClient.js > CLOSED = ");
-    });
-
-    sockets.push(ws);
-
-    if (connectionAttempts < maxSockets) {
-        setTimeout(connectToWebSocket, 500);
-    }
-
-};*/
-
-//connectToWebSocket();
