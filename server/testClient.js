@@ -1,13 +1,13 @@
 
 var WebSocket = require('ws');
 var async = require('async');
-var Primus = require('Primus');
+var Primus = require('primus');
 var  request = require('request');
 
 
 // USAGES:
 /****************************************************************************************
- * node server/testClient.js  îdomaineî îamount of usersî
+ * node server/testClient.js  ‚Äùdomaine‚Äù ‚Äùamount of users‚Äù
  * @example node server/testClient.js  https://next-fan.com 200 *
  */
 // COMMAND LINE PARAMETERS
