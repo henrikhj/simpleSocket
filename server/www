@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-
+var cluster = require('cluster')
 var app = require('./app');
 var debug = require('debug')('Tv2FanDroplet:server');
 var http = require('http');
@@ -12,51 +12,69 @@ var primusController= require('./controller/primusController');
 
 console.log (" www > GO GO = process.env.MONGO_URI " , process.env.MONGO_URI);
 
+var workers = {},
+    count = require('os').cpus().length;
 
+function spawn(){
+  var worker = cluster.fork();
+  workers[worker.pid] = worker;
+  return worker;
+}
 
-var mongo_uri = process.env.MONGO_URI;
-console.log (" www > mongo_uri  = " , mongo_uri );
-
-var dbConnection = mongoose.connect(mongo_uri , {}, function(err) {
-  if (err) {
-    console.log (" www > mongo connection err = " , err);
-  } else {
-    console.log('mongodb connection successful');
+if (cluster.isMaster) {
+  for (var i = 0; i < count; i++) {
+    spawn();
   }
-});
+  cluster.on('death', function(worker) {
+    console.log('worker ' + worker.pid + ' died. spawning a new process...');
+    delete workers[worker.pid];
+    spawn();
+  });
+} else {
+  var mongo_uri = process.env.MONGO_URI;
+  console.log (" www > mongo_uri  = " , mongo_uri );
 
-var dbConnection = mongoose.connection;
-dbConnection.on('error', console.error.bind(console, 'MongoDB connection error:'));
+  var dbConnection = mongoose.connect(mongo_uri , {}, function(err) {
+    if (err) {
+      console.log (" www > mongo connection err = " , err);
+    } else {
+      console.log('mongodb connection successful');
+    }
+  });
 
-/**
- * Get port from environment and store in Express.
- */
+  var dbConnection = mongoose.connection;
+  dbConnection.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+  /**
+   * Get port from environment and store in Express.
+   */
 
-/**
- * Create HTTP server.
- */
+  var port = normalizePort(process.env.PORT || '3000');
+  app.set('port', port);
 
-var server = http.createServer(app);
+  /**
+   * Create HTTP server.
+   */
 
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+  var server = http.createServer(app);
 
 
-/**
- * Set up primus
- */
+  /**
+   * Listen on provided port, on all network interfaces.
+   */
 
-primusController.init(server)
-console.log (" www > Server is Running on PORT:", port);
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
+
+
+  /**
+   * Set up primus
+   */
+
+  primusController.init(server)
+  console.log (" www > Server is Running on PORT:", port);
+}
 
 
 /**
